@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>李生的box</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, sans-serif;
+        }
+        body {
+            padding: 30px;
+            margin:0;
+            background: linear-gradient(135deg, #382860, #582b78);
+            background-size: 400% 400%;
+            animation: gradientShift 12s ease infinite;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x:hidden;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* 页面水印 */
+        body::after{
+                content:"Steve 李生";
+                position:fixed;
+                top: 130px;
+                left: 40px;
+                z-index:-1;
+                color:rgba(255,255,255,0.12);
+                font-size: 28px;
+                font-weight: 500;
+                transform: rotate(-22deg);
+                pointer-events:none;
+                white-space: nowrap;
+}
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .header-bar{
+            display:flex;
+            justify-content: space-between;
+            align-items:center;
+        }
+        .lang-switch button{
+            margin-left:6px;
+        }
+        .card {
+            background: #ffffff;
+            color:#222;
+            border-radius:18px;
+            padding:24px;
+            margin-bottom:22px;
+            box-shadow: 0 8px 24px #00000033;
+        }
+        .card h2 {
+            margin-top:0;
+            margin-bottom:16px;
+            font-size:20px;
+        }
+        .row {
+            display:flex;
+            gap:12px;
+            align-items:center;
+            flex-wrap:wrap;
+            margin-bottom:14px;
+        }
+        input, select {
+            padding:10px 14px;
+            border-radius:10px;
+            border:1px solid #ccc;
+            font-size:16px;
+            min-width:220px;
+        }
+        button {
+            padding:10px 20px;
+            background:#2563eb;
+            color:white;
+            border:none;
+            border-radius:10px;
+            font-size:16px;
+            cursor:pointer;
+            transition:0.2s;
+        }
+        button:hover {
+            background:#1d4ed8;
+        }
+        .result-box {
+            background:#111;
+            color:#39ff73;
+            padding:16px;
+            border-radius:12px;
+            white-space:pre-wrap;
+            min-height:120px;
+            max-height:320px;
+            overflow-x:auto;
+            overflow-y:auto;
+            font-family:Consolas,monospace;
+            font-size:14px;
+        }
+        /* 烟花粒子 */
+        .firework{
+            position:fixed;
+            pointer-events:none;
+            border-radius:50%;
+            animation:fireAni 0.7s ease-out forwards;
+        }
+        @keyframes fireAni{
+            0%{transform:scale(0);opacity:1;}
+            100%{transform:scale(2);opacity:0;}
+        }
+        /* ========= SOP知识库 Tab样式 ========= */
+        .tab-bar{
+            display:flex;
+            gap:6px;
+            margin-bottom:14px;
+            border-bottom:1px solid #ddd;
+        }
+        .tab-btn{
+            background:#e9edf7;
+            color:#222;
+            border:none;
+            border-radius:8px 8px 0 0;
+            padding:8px 16px;
+        }
+        .tab-btn.active{
+            background:#2563eb;
+            color:#fff;
+        }
+        .tab-panel{
+            display:none;
+        }
+        .tab-panel.active{
+            display:block;
+        }
+        .code-block-wrap{
+            position:relative;
+            margin:12px 0;
+        }
+        .code-block{
+            background:#1e1e1e;
+            color:#4ade80;
+            font-family:Consolas;
+            padding:12px;
+            border-radius:8px;
+            white-space:pre-wrap;
+        }
+        .copy-btn{
+            position:absolute;
+            top:6px;
+            right:6px;
+            padding:4px 10px;
+            font-size:12px;
+        }
+        .tip-text{
+            color:#555;
+            font-size:14px;
+            margin:8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-bar">
+            <h1 id="pageTitle" style="text-align:center">李生的box</h1>
+            <div class="lang-switch">
+                <button onclick="setLang('zh')">中文</button>
+                <button onclick="setLang('en')">English</button>
+            </div>
+        </div>
+        <!-- Ping -->
+        <div class="card">
+            <h2 id="pingTitle">Ping 连通测试</h2>
+            <div class="row">
+                <input id="pingHost" placeholder="输入域名/IP，如 baidu.com">
+                <button id="pingBtn" onclick="runPing()">Ping测试</button>
+            </div>
+            <div id="pingResult" class="result-box"></div>
+        </div>
+        <!-- DNS查询 -->
+        <div class="card">
+            <h2 id="dnsTitle">DNS 查询</h2>
+            <div class="row">
+                <input id="dnsHost" placeholder="域名 baidu.com">
+                <select id="dnsType">
+                    <option value="A">A记录</option>
+                    <option value="AAAA">AAAA记录</option>
+                    <option value="CNAME">CNAME记录</option>
+                    <option value="MX">MX记录</option>
+                    <option value="TXT">TXT记录</option>
+                </select>
+                <button id="dnsBtn" onclick="runDns()">查询DNS</button>
+            </div>
+            <div id="dnsResult" class="result-box"></div>
+        </div>
+        <!-- SSL证书检测 -->
+        <div class="card">
+            <h2 id="sslTitle">SSL证书检测</h2>
+            <div class="row">
+                <input id="sslHost" placeholder="域名 baidu.com">
+                <button id="sslBtn" onclick="runSsl()">检测证书</button>
+            </div>
+            <div id="sslResult" class="result-box"></div>
+        </div>
+        <!-- TCP端口探测 -->
+        <div class="card">
+            <h2 id="portTitle">TCP端口探测（最多3个端口，逗号分隔）</h2>
+            <div class="row">
+                <input id="portHost" placeholder="目标主机 baidu.com">
+                <input id="ports" placeholder="端口 80,443">
+                <button id="portBtn" onclick="runPortScan()">扫描端口</button>
+            </div>
+            <div id="portResult" class="result-box"></div>
+        </div>
+        <!-- Traceroute路由追踪 -->
+        <div class="card">
+            <h2 id="traceTitle">Traceroute 路由追踪</h2>
+            <div class="row">
+                <input id="traceHost" placeholder="域名/IP，如 baidu.com">
+                <button id="traceBtn" onclick="runTraceroute()">开始追踪</button>
+            </div>
+            <div id="traceResult" class="result-box"></div>
+        </div>
+        <!-- HTTP连通检测 -->
+        <div class="card">
+            <h2 id="httpTitle">HTTP连通检测</h2>
+            <div class="row">
+                <input id="httpUrl" placeholder="baidu.com 无需加http">
+                <button id="httpBtn" onclick="runHttp()">检测</button>
+            </div>
+            <div id="httpResult" class="result-box"></div>
+        </div>
+        <!-- IP归属地查询 -->
+        <div class="card">
+            <h2 id="geoTitle">IP归属地查询</h2>
+            <div class="row">
+                <input id="geoHost" placeholder="输入IP或者域名，例如 baidu.com">
+                <button id="geoBtn" onclick="runIpGeo()">查询归属地</button>
+            </div>
+            <div id="geoResult" class="result-box"></div>
+        </div>
+        <!-- Whois域名查询 -->
+        <div class="card">
+            <h2 id="whoisTitle">Whois域名查询</h2>
+            <div class="row">
+                <input type="text" id="whoisInput" placeholder="输入域名，如 baidu.com">
+                <button id="whoisBtn" onclick="runWhois()">查询Whois</button>
+            </div>
+            <pre id="whoisResult" class="result-box"></pre>
+        </div>
+        <!-- IP计算器 新增 -->
+        <div class="card">
+            <h2 id="ipCalcTitle">IP子网计算器</h2>
+            <div class="row">
+                <input id="ipAddr" placeholder="IP地址，例如 192.168.1.10">
+                <input id="cidrMask" placeholder="CIDR /24 或者子网掩码 255.255.255.0">
+                <button id="ipCalcBtn" onclick="calcIp()">计算IP子网</button>
+            </div>
+            <div id="ipCalcResult" class="result-box"></div>
+        </div>
+        <!-- ============ IT-tech 知识库 ============ -->
+        <div class="card">
+            <h2 id="itTechTitle">IT-tech</h2>
+            <div class="tab-bar">
+                <button class="tab-btn active" data-tab="win">Windows</button>
+                <button class="tab-btn" data-tab="linux">Linux</button>
+                <button class="tab-btn" data-tab="mac">MacOS</button>
+                <button class="tab-btn" data-tab="faq">FAQ</button>
+            </div>
+            <!-- Windows面板 -->
+            <div class="tab-panel active" id="tab-win">
+                <div class="tip-text" id="winTip">🔖 本机网络故障排查SOP步骤：</div>
+                <ol style="padding-left:20px;">
+                    <li id="winStep1">ping网关，确认局域网基础连通性</li>
+                    <li id="winStep2">ipconfig /all 查看网卡IP、DNS服务器配置</li>
+                    <li id="winStep3">ipconfig /flushdns 清空本地DNS缓存</li>
+                    <li id="winStep4">检查 C:\Windows\System32\drivers\etc\hosts 是否被篡改</li>
+                    <li id="winStep5">检查 Windows防火墙 / 第三方安全软件是否拦截出站连接</li>
+                    <li id="winStep6">tracert 目标，定位丢包节点</li>
+                </ol>
+                <div class="tip-text" id="winCmdTip">📋 CMD / PowerShell 诊断脚本（只读，无修改操作，点击复制）</div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="ipconfig /all">ipconfig /all</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="ipconfig /flushdns">ipconfig /flushdns</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="route print">route print</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="tracert -d baidu.com">tracert -d baidu.com</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+                <div class="tip-text" id="winFaq">❓FAQ：nslookup解析正常，浏览器打不开网页？</div>
+                <p style="font-size:14px;color:#444" id="winFaqText">大概率是本机DNS缓存异常、代理/VPN劫持、hosts文件污染；优先执行flushdns，关闭代理测试。</p>
+            </div>
+            <!-- Linux面板 -->
+            <div class="tab-panel" id="tab-linux">
+                <div class="tip-text" id="linuxTip">🔖 Linux网络故障排查SOP步骤：</div>
+                <ol style="padding-left:20px;">
+                    <li id="linuxStep1">ip a 确认网卡IP是否正常获取</li>
+                    <li id="linuxStep2">ping 网关测试内网连通</li>
+                    <li id="linuxStep3">cat /etc/resolv.conf 检查DNS配置</li>
+                    <li id="linuxStep4">systemd-resolve 清理DNS缓存</li>
+                    <li id="linuxStep5">检查 iptables/firewalld 防火墙策略</li>
+                    <li id="linuxStep6">traceroute / mtr 追踪链路丢包</li>
+                </ol>
+                <div class="tip-text" id="linuxCmdTip">📋 Shell诊断脚本（只读）</div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="ip a">ip a</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="cat /etc/resolv.conf">cat /etc/resolv.conf</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="traceroute -n baidu.com">traceroute -n baidu.com</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+            </div>
+            <!-- MacOS面板 -->
+            <div class="tab-panel" id="tab-mac">
+                <div class="tip-text" id="macTip">🔖 MacOS网络故障排查SOP步骤：</div>
+                <ol style="padding-left:20px;">
+                    <li id="macStep1">ifconfig 查看网卡IP地址</li>
+                    <li id="macStep2">ping网关测试局域网连通</li>
+                    <li id="macStep3">scutil --dns 查看系统DNS配置</li>
+                    <li id="macStep4">sudo dscacheutil -flushcache 刷新DNS缓存</li>
+                    <li id="macStep5">检查系统防火墙、代理/VPN</li>
+                    <li id="macStep6">traceroute 追踪网络路径</li>
+                </ol>
+                <div class="tip-text" id="macCmdTip">📋 Terminal诊断脚本（只读）</div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="scutil --dns">scutil --dns</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="sudo dscacheutil -flushcache">sudo dscacheutil -flushcache</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+                <div class="code-block-wrap">
+<pre class="code-block" data-copy="traceroute baidu.com">traceroute baidu.com</pre>
+<button class="copy-btn" onclick="copyCode(this)">复制</button>
+                </div>
+            </div>
+            <!-- FAQ面板 新增 -->
+            <div class="tab-panel" id="tab-faq">
+                <div class="tip-text">📖 IT常见知识库</div>
+                <div style="font-size:14px;color:#334;line-height:1.6;">
+                    <p><strong>1. Windows 和 Linux 目录结构区别</strong><br>
+Windows：多根分区 C盘 D盘，\反斜杠分隔；C:\Windows系统目录，C:\Program Files软件。<br>
+Linux：单根目录 /，/root管理员家目录，/home普通用户，/etc配置文件，/bin系统命令，/var日志。
+                    </p>
+                    <p><strong>2. Linux主流发行版官方下载地址</strong><br>
+Ubuntu：https://ubuntu.com/download<br>
+CentOS Stream：https://centos.org/stream9/<br>
+Debian：https://www.debian.org/distrib/<br>
+Rocky Linux：https://rockylinux.org/download/<br>
+AlmaLinux：https://almalinux.org/get-almalinux/
+                    </p>
+                    <p><strong>3. nslookup解析正常，浏览器打不开网页？</strong><br>
+大概率是本机DNS缓存异常、代理/VPN劫持、hosts文件污染；优先执行flushdns，关闭代理测试。
+                    </p>
+                    <p style="color:#2563eb;"><em>如果需要可以联系Stephen 无偿Fix</em></p>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+// ========== 多语言文本库 =========
+const langData = {
+    zh:{
+        pageTitle:"李生的box",
+        pingTitle:"Ping 连通测试",
+        pingBtn:"Ping测试",
+        dnsTitle:"DNS 查询",
+        dnsBtn:"查询DNS",
+        sslTitle:"SSL证书检测",
+        sslBtn:"检测证书",
+        portTitle:"TCP端口探测（最多3个端口，逗号分隔）",
+        portBtn:"扫描端口",
+        traceTitle:"Traceroute 路由追踪",
+        traceBtn:"开始追踪",
+        httpTitle:"HTTP连通检测",
+        httpBtn:"检测",
+        geoTitle:"IP归属地查询",
+        geoBtn:"查询归属地",
+        whoisTitle:"Whois域名查询",
+        whoisBtn:"查询Whois",
+        ipCalcTitle:"IP子网计算器",
+        ipCalcBtn:"计算IP子网",
+        itTechTitle:"IT-tech",
+        winTip:"🔖 本机网络故障排查SOP步骤：",
+        winStep1:"ping网关，确认局域网基础连通性",
+        winStep2:"ipconfig /all 查看网卡IP、DNS服务器配置",
+        winStep3:"ipconfig /flushdns 清空本地DNS缓存",
+        winStep4:"检查 C:\\Windows\\System32\\drivers\\etc\\hosts 是否被篡改",
+        winStep5:"检查 Windows防火墙 / 第三方安全软件是否拦截出站连接",
+        winStep6:"tracert 目标，定位丢包节点",
+        winCmdTip:"📋 CMD / PowerShell 诊断脚本（只读，无修改操作，点击复制）",
+        winFaq:"❓FAQ：nslookup解析正常，浏览器打不开网页？",
+        winFaqText:"大概率是本机DNS缓存异常、代理/VPN劫持、hosts文件污染；优先执行flushdns，关闭代理测试。",
+        linuxTip:"🔖 Linux网络故障排查SOP步骤：",
+        linuxStep1:"ip a 确认网卡IP是否正常获取",
+        linuxStep2:"ping 网关测试内网连通",
+        linuxStep3:"cat /etc/resolv.conf 检查DNS配置",
+        linuxStep4:"systemd-resolve 清理DNS缓存",
+        linuxStep5:"检查 iptables/firewalld 防火墙策略",
+        linuxStep6:"traceroute / mtr 追踪链路丢包",
+        linuxCmdTip:"📋 Shell诊断脚本（只读）",
+        macTip:"🔖 MacOS网络故障排查SOP步骤：",
+        macStep1:"ifconfig 查看网卡IP地址",
+        macStep2:"ping网关测试局域网连通",
+        macStep3:"scutil --dns 查看系统DNS配置",
+        macStep4:"sudo dscacheutil -flushcache 刷新DNS缓存",
+        macStep5:"检查系统防火墙、代理/VPN",
+        macStep6:"traceroute 追踪网络路径",
+        macCmdTip:"📋 Terminal诊断脚本（只读）",
+        copyBtn:"复制"
+    },
+    en:{
+        pageTitle:"LiSheng's Box",
+        pingTitle:"Ping Connectivity Test",
+        pingBtn:"Start Ping",
+        dnsTitle:"DNS Lookup",
+        dnsBtn:"Query DNS",
+        sslTitle:"SSL Certificate Check",
+        sslBtn:"Check Cert",
+        portTitle:"TCP Port Scan (max 3 ports, comma separated)",
+        portBtn:"Scan Port",
+        traceTitle:"Traceroute",
+        traceBtn:"Start Trace",
+        httpTitle:"HTTP Connect Test",
+        httpBtn:"Test",
+        geoTitle:"IP Geo Lookup",
+        geoBtn:"Query Geo",
+        whoisTitle:"Whois Domain Query",
+        whoisBtn:"Query Whois",
+        ipCalcTitle:"IP Subnet Calculator",
+        ipCalcBtn:"Calculate Subnet",
+        itTechTitle:"IT-tech",
+        winTip:"🔖 Local network troubleshooting SOP:",
+        winStep1:"ping gateway to verify LAN connectivity",
+        winStep2:"ipconfig /all check IP and DNS",
+        winStep3:"ipconfig /flushdns clear local dns cache",
+        winStep4:"Check C:\\Windows\\System32\\drivers\\etc\\hosts hijack",
+        winStep5:"Check Windows firewall / security software outbound block",
+        winStep6:"tracert target to find packet loss hop",
+        winCmdTip:"📋 CMD / PowerShell script (read-only, click copy)",
+        winFaq:"❓FAQ: nslookup works but browser cannot open website?",
+        winFaqText:"Usually DNS cache, proxy/VPN hijack or hosts pollution. Run flushdns and disable proxy.",
+        linuxTip:"🔖 Linux network troubleshooting SOP:",
+        linuxStep1:"ip a check network interface IP",
+        linuxStep2:"ping gateway for LAN test",
+        linuxStep3:"cat /etc/resolv.conf check dns",
+        linuxStep4:"systemd-resolve clear dns cache",
+        linuxStep5:"Check iptables/firewalld rules",
+        linuxStep6:"traceroute/mtr locate packet loss",
+        linuxCmdTip:"📋 Shell script (read-only)",
+        macTip:"🔖 MacOS network troubleshooting SOP:",
+        macStep1:"ifconfig show interface IP",
+        macStep2:"ping gateway for LAN test",
+        macStep3:"scutil --dns check dns config",
+        macStep4:"sudo dscacheutil -flushcache refresh dns cache",
+        macStep5:"Check firewall and proxy/VPN",
+        macStep6:"traceroute trace network path",
+        macCmdTip:"📋 Terminal script (read-only)",
+        copyBtn:"Copy"
+    }
+}
+let currentLang = "zh";
+function setLang(lang){
+    currentLang = lang;
+    const t = langData[lang];
+    document.getElementById("pageTitle").innerText = t.pageTitle;
+    document.getElementById("pingTitle").innerText = t.pingTitle;
+    document.getElementById("pingBtn").innerText = t.pingBtn;
+    document.getElementById("dnsTitle").innerText = t.dnsTitle;
+    document.getElementById("dnsBtn").innerText = t.dnsBtn;
+    document.getElementById("sslTitle").innerText = t.sslTitle;
+    document.getElementById("sslBtn").innerText = t.sslBtn;
+    document.getElementById("portTitle").innerText = t.portTitle;
+    document.getElementById("portBtn").innerText = t.portBtn;
+    document.getElementById("traceTitle").innerText = t.traceTitle;
+    document.getElementById("traceBtn").innerText = t.traceBtn;
+    document.getElementById("httpTitle").innerText = t.httpTitle;
+    document.getElementById("httpBtn").innerText = t.httpBtn;
+    document.getElementById("geoTitle").innerText = t.geoTitle;
+    document.getElementById("geoBtn").innerText = t.geoBtn;
+    document.getElementById("whoisTitle").innerText = t.whoisTitle;
+    document.getElementById("whoisBtn").innerText = t.whoisBtn;
+    document.getElementById("ipCalcTitle").innerText = t.ipCalcTitle;
+    document.getElementById("ipCalcBtn").innerText = t.ipCalcBtn;
+    document.getElementById("itTechTitle").innerText = t.itTechTitle;
+    document.getElementById("winTip").innerText = t.winTip;
+    document.getElementById("winStep1").innerText = t.winStep1;
+    document.getElementById("winStep2").innerText = t.winStep2;
+    document.getElementById("winStep3").innerText = t.winStep3;
+    document.getElementById("winStep4").innerText = t.winStep4;
+    document.getElementById("winStep5").innerText = t.winStep5;
+    document.getElementById("winStep6").innerText = t.winStep6;
+    document.getElementById("winCmdTip").innerText = t.winCmdTip;
+    document.getElementById("winFaq").innerText = t.winFaq;
+    document.getElementById("winFaqText").innerText = t.winFaqText;
+    document.getElementById("linuxTip").innerText = t.linuxTip;
+    document.getElementById("linuxStep1").innerText = t.linuxStep1;
+    document.getElementById("linuxStep2").innerText = t.linuxStep2;
+    document.getElementById("linuxStep3").innerText = t.linuxStep3;
+    document.getElementById("linuxStep4").innerText = t.linuxStep4;
+    document.getElementById("linuxStep5").innerText = t.linuxStep5;
+    document.getElementById("linuxStep6").innerText = t.linuxStep6;
+    document.getElementById("linuxCmdTip").innerText = t.linuxCmdTip;
+    document.getElementById("macTip").innerText = t.macTip;
+    document.getElementById("macStep1").innerText = t.macStep1;
+    document.getElementById("macStep2").innerText = t.macStep2;
+    document.getElementById("macStep3").innerText = t.macStep3;
+    document.getElementById("macStep4").innerText = t.macStep4;
+    document.getElementById("macStep5").innerText = t.macStep5;
+    document.getElementById("macStep6").innerText = t.macStep6;
+    document.getElementById("macCmdTip").innerText = t.macCmdTip;
+    document.querySelectorAll('.copy-btn').forEach(b=>b.innerText = t.copyBtn);
+}
+
+// ===== Tab标签切换逻辑 =====
+const tabBtns = document.querySelectorAll('.tab-btn');
+tabBtns.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+        const targetTabId = "tab-" + btn.dataset.tab;
+        //清除全部激活
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(targetTabId).classList.add('active');
+    })
+})
+// ===== 代码块一键复制函数 =====
+async function copyCode(btnEl){
+    const preEl = btnEl.previousElementSibling;
+    const text = preEl.dataset.copy || preEl.innerText;
+    try{
+        await navigator.clipboard.writeText(text.trim());
+        const oldText = btnEl.innerText;
+        btnEl.innerText = "✅已复制";
+        setTimeout(()=>{btnEl.innerText = oldText;},1200);
+    }catch(err){
+        alert("复制失败，请手动选中复制");
+    }
+}
+// ===== 鼠标点击烟花特效 =====
+document.addEventListener('click',e=>{
+    const count = 10;
+    for(let i=0;i<count;i++){
+        const div = document.createElement('div');
+        div.className='firework';
+        const size = Math.random()*6+2;
+        div.style.width = size+'px';
+        div.style.height = size+'px';
+        div.style.left = e.clientX+'px';
+        div.style.top = e.clientY+'px';
+        div.style.background = `hsl(${Math.random()*360},80%,60%)`;
+        document.body.appendChild(div);
+        setTimeout(()=>div.remove(),700);
+    }
+})
+// ================= IP子网计算器核心函数 =================
+function ipToNum(ipStr){
+    const arr = ipStr.split('.').map(Number);
+    return (arr[0]<<24)+(arr[1]<<16)+(arr[2]<<8)+arr[3];
+}
+function numToIp(num){
+    const a = (num>>>24)&0xff;
+    const b = (num>>>16)&0xff;
+    const c = (num>>>8)&0xff;
+    const d = num&0xff;
+    return `${a}.${b}.${c}.${d}`;
+}
+function cidrToMask(prefixLen){
+    let mask = 0;
+    for(let i=0;i<prefixLen;i++) mask |= (1 << (31-i));
+    return numToIp(mask>>>0);
+}
+function maskToCidr(maskStr){
+    const num = ipToNum(maskStr);
+    let cnt=0;
+    for(let i=31;i>=0;i--){
+        if((num>>i)&1) cnt++;
+        else break;
+    }
+    return cnt;
+}
+async function calcIp(){
+    const ipInput = document.getElementById("ipAddr").value.trim();
+    const maskInput = document.getElementById("cidrMask").value.trim();
+    const resEl = document.getElementById("ipCalcResult");
+    try{
+        let cidr;
+        if(maskInput.startsWith("/")){
+            cidr = parseInt(maskInput.replace("/",""));
+        }else if(maskInput.includes(".")){
+            cidr = maskToCidr(maskInput);
+        }else{
+            cidr = parseInt(maskInput);
+        }
+        if(isNaN(cidr) || cidr<0 || cidr>32){
+            resEl.textContent = "掩码格式错误！支持 /24 或者 255.255.255.0";
+            return;
+        }
+        const ipNum = ipToNum(ipInput);
+        const maskNum = ipToNum(cidrToMask(cidr));
+        const netNum = (ipNum & maskNum) >>>0;
+        const broadcastNum = (netNum | (~maskNum >>>0)) >>>0;
+        const totalHost = Math.pow(2,32-cidr);
+        const usableHost = totalHost -2;
+        const networkIp = numToIp(netNum);
+        const broadcastIp = numToIp(broadcastNum);
+        const firstHost = cidr ===32 ? networkIp : numToIp(netNum+1);
+        const lastHost = cidr ===32 ? networkIp : numToIp(broadcastNum-1);
+        let txt = `IP地址: ${ipInput}
+CIDR前缀: /${cidr}
+子网掩码: ${cidrToMask(cidr)}
+网络地址: ${networkIp}
+广播地址: ${broadcastIp}
+首可用主机: ${firstHost}
+末可用主机: ${lastHost}
+总主机数量: ${totalHost}
+可用主机数: ${usableHost}
+`;
+        if(cidr ===32) txt += "说明：/32 是主机路由，只有单个IP";
+        if(cidr ===31) txt += "说明：/31 RFC3021，点对点链路，无网络广播";
+        resEl.textContent = txt;
+    }catch(e){
+        resEl.textContent = "IP解析失败，请检查IP格式";
+    }
+}
+// Ping
+async function runPing(){
+    const host = document.getElementById('pingHost').value.trim();
+    const resEl = document.getElementById('pingResult');
+    resEl.textContent = "正在Ping...";
+    const res = await fetch('/api/ping',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({host})
+    });
+    const data = await res.json();
+    if(data.error){
+        resEl.textContent = `Ping失败：${data.error}`;
+        return;
+    }
+    resEl.textContent = data.output;
+}
+// DNS
+async function runDns(){
+    const host = document.getElementById('dnsHost').value.trim();
+    const typeSel = document.getElementById('dnsType');
+    const recordType = typeSel.value;
+    const resEl = document.getElementById('dnsResult');
+    resEl.textContent = "查询DNS中...";
+    const res = await fetch('/api/dns',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({host, recordType})
+    });
+    const data = await res.json();
+    if(data.error){
+        resEl.textContent = `DNS查询失败：${data.error}`;
+        return;
+    }
+    let txt = `域名：${host}\n记录类型：${recordType}\n\n解析结果：\n`;
+    txt += data.data.join('\n');
+    resEl.textContent = txt;
+}
+// SSL证书
+async function runSsl(){
+    const host = document.getElementById('sslHost').value.trim();
+    const resEl = document.getElementById('sslResult');
+    resEl.textContent = "证书检测中...";
+    const res = await fetch('/api/ssl',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({host})
+    });
+    const data = await res.json();
+    if(data.error){
+        resEl.textContent = `证书检测失败：${data.error}`;
+        return;
+    }
+    const c = data.cert;
+    let txt = `域名：${host}
+签发机构：${c.issuer?.O || "-"}
+证书有效期
+起始：${c.valid_from}
+到期：${c.valid_to}
+序列号：${c.serialNumber}
+    `;
+    resEl.textContent = txt;
+}
+// 端口扫描
+async function runPortScan(){
+    const host = document.getElementById('portHost').value.trim();
+    const portsRaw = document.getElementById('ports').value.trim();
+    const ports = portsRaw.split(',').map(x=>Number(x.trim())).filter(n=>!isNaN(n));
+    const resEl = document.getElementById('portResult');
+    resEl.textContent = "端口扫描中...";
+    const res = await fetch('/api/portscan',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({host, ports})
+    });
+    const data = await res.json();
+    if(data.error){
+        resEl.textContent = `扫描失败：${data.error}`;
+        return;
+    }
+    let txt = `目标主机：${host}\n\n端口状态：\n`;
+    for(const p of data.results){
+        txt += `端口${p.port}: ${p.open ? "✅ 开放" : "❌ 关闭"}\n`
+    }
+    resEl.textContent = txt;
+}
+// Traceroute路由追踪
+// Traceroute路由追踪（普通POST，Windows兼容版）
+// Traceroute路由追踪（普通POST，Windows兼容版）
+// 路由追踪 SSE实时流式输出，边跑边追加，自动滚动
+// 全局保存SSE实例，用来关闭旧连接
+let tracerouteEventSource = null;
+
+function runTraceroute(){
+    // 关闭上一次连接
+    if(tracerouteEventSource){
+        tracerouteEventSource.close();
+        tracerouteEventSource = null;
+    }
+
+    const host = document.getElementById('traceHost').value.trim();
+    const resEl = document.getElementById('traceResult');
+    resEl.innerHTML = "";
+
+    tracerouteEventSource = new EventSource(`/api/traceroute?host=${encodeURIComponent(host)}`);
+    tracerouteEventSource.onmessage = function(e) {
+        // 把Windows \r\n 全部统一换成 \n，再分割成行数组
+        let raw = e.data.replace(/\r\n/g,"\n");
+        const lines = raw.split("\n");
+        for(const line of lines){
+            if(line.trim() !== ""){
+                // 每一行单独追加，自动换行
+                resEl.innerHTML += line + "\n";
+            }
+        }
+        resEl.scrollTop = resEl.scrollHeight;
+    }
+    tracerouteEventSource.onerror = function(){
+        resEl.innerHTML += "\n====追踪结束====\n";
+        tracerouteEventSource.close();
+        tracerouteEventSource = null;
+    }
+}
+
+
+// HTTP检测
+async function runHttp(){
+    let url = document.getElementById('httpUrl').value.trim();
+    const resEl = document.getElementById('httpResult');
+    resEl.textContent = "HTTP检测中...";
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(),6000);
+    try{
+        const res = await fetch('/api/http',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({url}),
+            signal:controller.signal
+        });
+        clearTimeout(timer);
+        const data = await res.json();
+        if(data.error){
+            resEl.textContent = `HTTP检测失败：${data.error}`;
+            return;
+        }
+        let txt = `目标地址：${data.url}\n状态码：${data.status}\n连通状态：正常`;
+        resEl.textContent = txt;
+    }catch(e){
+        clearTimeout(timer);
+        if(e.name==="AbortError"){
+            resEl.textContent = "请求超时(6秒)";
+        }else{
+            resEl.textContent = "请求异常："+e.message;
+        }
+    }
+}
+// IP归属地查询
+async function runIpGeo(){
+    const host = document.getElementById('geoHost').value.trim();
+    const resEl = document.getElementById('geoResult');
+    resEl.textContent = "归属地查询中...";
+    const res = await fetch('/api/ipgeo',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({host})
+    });
+    const data = await res.json();
+    if(!data.success){
+        resEl.textContent = `查询失败：${data.error}`;
+        return;
+    }
+    let txt = `查询对象：${data.queryHost}
+解析IP：${data.ip}
+国家：${data.country}
+省份：${data.region}
+城市：${data.city}
+运营商：${data.isp}
+时区：${data.timezone}`;
+    resEl.textContent = txt;
+}
+async function runWhois(){
+    const dom = document.getElementById('whoisInput').value.trim();
+    const res = await fetch("/api/whois",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({domain:dom})
+    });
+    const data = await res.json();
+    const box = document.getElementById('whoisResult');
+    if(data.success){
+        box.innerText = data.raw;
+    }else{
+        box.innerText = "查询失败："+data.error;
+    }
+}
+</script>
+<!-- 页脚友情链接 -->
+<footer style="margin-top:40px;padding:24px;background:rgba(0,0,0,0.2);border-radius:14px;color:#fff;text-align:center;">
+    <h4 style="margin-bottom:14px;font-size:16px;">🔗 常用站点导航</h4>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;">
+        <a href="https://github.com" target="_blank" style="color:#87cefa;text-decoration:none;">GitHub</a>
+        <a href="https://stackoverflow.com" target="_blank" style="color:#87cefa;text-decoration:none;">StackOverflow</a>
+        <a href="https://juejin.cn" target="_blank" style="color:#87cefa;text-decoration:none;">掘金</a>
+        <a href="https://leetcode.cn" target="_blank" style="color:#87cefa;text-decoration:none;">力扣</a>
+        <a href="https://www.wireshark.org" target="_blank" style="color:#87cefa;text-decoration:none;">Wireshark网络分析</a>
+        <a href="https://gemini.google.com" target="_blank" style="color:#87cefa;text-decoration:none;">Gemini AI</a>
+        <a href="https://chatgpt.com" target="_blank" style="color:#87cefa;text-decoration:none;">啊柴</a>
+        <a href="https://www.google.com" target="_blank" style="color:#87cefa;text-decoration:none;">Google</a>
+        <a href="https://www.doubao.com" target="_blank" style="color:#87cefa;text-decoration:none;">豆包</a>
+        <a href="https://www.qunar.com" target="_blank" style="color:#87cefa;text-decoration:none;">去哪儿旅行</a>
+    </div>
+    <div style="margin-top:16px;font-size:13px;opacity:0.7;">
+        © 2026 李生的box | 仅供学习调试使用
+    </div>
+</footer>
+</body>
+</html>
