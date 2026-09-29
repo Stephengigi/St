@@ -288,6 +288,22 @@
                     <li id="winStep5">检查 Windows防火墙 / 第三方安全软件是否拦截出站连接</li>
                     <li id="winStep6">tracert 目标，定位丢包节点</li>
                 </ol>
+                <div class="card">
+  <h3 data-i18n-zh>Windows网络系统一键排查脚本</h3>
+  <h3 data-i18n-en>Windows Network Diagnostic Script</h3>
+  <p data-i18n-zh>PowerShell一键检测网关、DNS、网卡、防火墙、开机启动项等，管理员权限运行。</p>
+  <p data-i18n-en>PowerShell script for checking gateway, DNS, network adapter, firewall and startup items, run as administrator.</p>
+  <a href="./Win-Net-Diagnose-v2.2.ps1" download="Win-Net-Diagnose-v2.2.ps1" class="download-btn">
+    <span data-i18n-zh>📥 下载脚本</span>
+    <span data-i18n-en>📥 Download Script</span>
+  </a>
+  <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-zh>使用方法：第一步执行允许not数字签名 powershell  Set-ExecutionPolicy RemoteSigned
+</div>
+                                        <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-en>  第二步 NTFS锁定记录解除  Unblock-File .\Win-Net-Diagnose-v2.2.ps1
+                                        </div>
+                                        <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-en> 第三步管理员run  .\Win-Net-Diagnose-v2.2.ps1
+</div>
+</div>
                 <div class="tip-text" id="winCmdTip">📋 CMD / PowerShell 诊断脚本（只读，无修改操作，点击复制）</div>
                 <div class="code-block-wrap">
 <pre class="code-block" data-copy="ipconfig /all">ipconfig /all</pre>
