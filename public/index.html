@@ -102,6 +102,16 @@
             font-family:Consolas,monospace;
             font-size:14px;
         }
+        .download-btn{
+            display:inline-block;
+            background:#22c55e;
+            color:white;
+            border:none;
+            border-radius:10px;
+            padding:10px 20px;
+            cursor:pointer;
+            font-size:16px;
+        }
         /* 烟花粒子 */
         .firework{
             position:fixed;
@@ -176,7 +186,7 @@
         <div class="card">
             <h2 id="pingTitle">Ping 连通测试</h2>
             <div style="color:#ff4444; font-size:14px; margin:6px 0;">
-    ⚠️ 提示：线上环境限制，Ping / 路由追踪仅本地运行可用，在线版本加急修复中！
+ ⚠️ 提示：线上环境限制，Ping / 路由追踪仅本地运行可用，在线版本加急修复中！
             </div>
             <div class="row">
                 <input id="pingHost" placeholder="输入域名/IP，如 baidu.com">
@@ -223,7 +233,7 @@
         <div class="card">
             <h2 id="traceTitle">Traceroute 路由追踪</h2>
             <div style="color:#ff4444; font-size:14px; margin:6px 0;">
-    ⚠️ 提示：线上环境限制，Ping / 路由追踪仅本地运行可用，在线版本加急修复中！
+ ⚠️ 提示：线上环境限制，Ping / 路由追踪仅本地运行可用，在线版本加急修复中！
             </div>
             <div class="row">
                 <input id="traceHost" placeholder="域名/IP，如 baidu.com">
@@ -268,6 +278,40 @@
             </div>
             <div id="ipCalcResult" class="result-box"></div>
         </div>
+                    <!-- 【新增】Windows硬件采集上报模块 -->
+        <div class="card">
+            <h2 data-i18n-zh>Windows硬件信息采集上报</h2>
+            <h2 data-i18n-en>Windows Hardware Collect & Upload</h2>
+            <div style="color:#d03838;font-size:13px;margin-bottom:10px;" data-i18n-zh>
+                ⚠️浏览器安全限制：网页JS无法读取MAC、BIOS‑SN序列号。需要下载脚本，本地管理员PowerShell运行，自动上报硬件信息到本网站。仅支持Windows系统。
+            </div>
+            <div style="color:#d03838;font-size:13px;margin-bottom:10px;" data-i18n-en>
+                ⚠️Browser security limit: JS cannot read MAC / BIOS‑SN. Download script and run as admin PowerShell locally to upload hardware info. Only for Windows.
+            </div>
+            <div class="row">
+                <button onclick="downloadPs1Script()" class="download-btn">
+    <span data-i18n-zh>📥下载硬件采集上报脚本</span>
+    <span data-i18n-en>📥Download Hardware Upload Script</span>
+                </button>
+                <button onclick="loadHardwareReport()" id="loadHardwareBtn">
+                    <span data-i18n-zh>刷新上报记录</span>
+                    <span data-i18n-en>Refresh Upload Records</span>
+                </button>
+            </div>
+            <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-zh>
+使用步骤：<br>
+1.管理员PowerShell执行 Set-ExecutionPolicy RemoteSigned 输入Y确认<br>
+2.Unblock-File .\Downloads\Win-Hardware-Upload.ps1<br>
+3.运行脚本 .\Win-Hardware-Upload.ps1，采集完成自动上报
+            </div>
+            <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-en>
+Instructions:<br>
+1.Admin PowerShell: Set-ExecutionPolicy RemoteSigned enter Y to confirm<br>
+2.Unblock-File .\Downloads\Win-Hardware-Upload.ps1<br>
+3.Run .\Win-Hardware-Upload.ps1, auto-upload after collect
+            </div>
+            <div id="hardwareReportResult" class="result-box" style="max-height:420px;"></div>
+        </div>
         <!-- ============ IT-tech 知识库 ============ -->
         <div class="card">
             <h2 id="itTechTitle">IT-tech</h2>
@@ -289,19 +333,19 @@
                     <li id="winStep6">tracert 目标，定位丢包节点</li>
                 </ol>
                 <div class="card">
-  <h3 data-i18n-zh>Windows网络系统一键排查脚本</h3>
-  <h3 data-i18n-en>Windows Network Diagnostic Script</h3>
-  <p data-i18n-zh>PowerShell一键检测网关、DNS、网卡、防火墙、开机启动项等，管理员权限运行。</p>
-  <p data-i18n-en>PowerShell script for checking gateway, DNS, network adapter, firewall and startup items, run as administrator.</p>
-  <a href="./Win-Net-Diagnose-v2.2.ps1" download="Win-Net-Diagnose-v2.2.ps1" class="download-btn">
+ <h3 data-i18n-zh>Windows网络系统一键排查脚本</h3>
+ <h3 data-i18n-en>Windows Network Diagnostic Script</h3>
+ <p data-i18n-zh>PowerShell一键检测网关、DNS、网卡、防火墙、开机启动项等，管理员权限运行。</p>
+ <p data-i18n-en>PowerShell script for checking gateway, DNS, network adapter, firewall and startup items, run as administrator.</p>
+ <a href="./Win-Net-Diagnose-v2.2.ps1" download="Win-Net-Diagnose-v2.2.ps1" class="download-btn">
     <span data-i18n-zh>📥 下载脚本</span>
     <span data-i18n-en>📥 Download Script</span>
-  </a>
-  <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-zh>使用方法：第一步执行允许not数字签名 powershell  Set-ExecutionPolicy RemoteSigned
+ </a>
+ <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-zh>使用方法：第一步执行允许not数字签名 powershell  Set-ExecutionPolicy RemoteSigned
 </div>
-                                        <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-en>  第二步 NTFS锁定记录解除  Unblock-File .\Win-Net-Diagnose-v2.2.ps1
-                                        </div>
-                                        <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-en> 第三步管理员run  .\Win-Net-Diagnose-v2.2.ps1
+                                    <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-en>  第二步 NTFS锁定记录解除  Unblock-File .\Win-Net-Diagnose-v2.2.ps1
+                                    </div>
+                                    <div style="margin-top:10px;font-size:12px;color:#aaa;" data-i18n-en> 第三步管理员run  .\Win-Net-Diagnose-v2.2.ps1
 </div>
 </div>
                 <div class="tip-text" id="winCmdTip">📋 CMD / PowerShell 诊断脚本（只读，无修改操作，点击复制）</div>
@@ -551,7 +595,6 @@ function setLang(lang){
     document.getElementById("macCmdTip").innerText = t.macCmdTip;
     document.querySelectorAll('.copy-btn').forEach(b=>b.innerText = t.copyBtn);
 }
-
 // ===== Tab标签切换逻辑 =====
 const tabBtns = document.querySelectorAll('.tab-btn');
 tabBtns.forEach(btn=>{
@@ -750,31 +793,21 @@ async function runPortScan(){
     resEl.textContent = txt;
 }
 // Traceroute路由追踪
-// Traceroute路由追踪（普通POST，Windows兼容版）
-// Traceroute路由追踪（普通POST，Windows兼容版）
-// 路由追踪 SSE实时流式输出，边跑边追加，自动滚动
-// 全局保存SSE实例，用来关闭旧连接
 let tracerouteEventSource = null;
-
 function runTraceroute(){
-    // 关闭上一次连接
     if(tracerouteEventSource){
         tracerouteEventSource.close();
         tracerouteEventSource = null;
     }
-
     const host = document.getElementById('traceHost').value.trim();
     const resEl = document.getElementById('traceResult');
     resEl.innerHTML = "";
-
     tracerouteEventSource = new EventSource(`/api/traceroute?host=${encodeURIComponent(host)}`);
     tracerouteEventSource.onmessage = function(e) {
-        // 把Windows \r\n 全部统一换成 \n，再分割成行数组
         let raw = e.data.replace(/\r\n/g,"\n");
         const lines = raw.split("\n");
         for(const line of lines){
             if(line.trim() !== ""){
-                // 每一行单独追加，自动换行
                 resEl.innerHTML += line + "\n";
             }
         }
@@ -786,8 +819,6 @@ function runTraceroute(){
         tracerouteEventSource = null;
     }
 }
-
-
 // HTTP检测
 async function runHttp(){
     let url = document.getElementById('httpUrl').value.trim();
@@ -858,6 +889,122 @@ async function runWhois(){
         box.innerText = "查询失败："+data.error;
     }
 }
+// =========【新增：读取硬件上报记录】=========
+async function loadHardwareReport(){
+    const box = document.getElementById("hardwareReportResult");
+    box.textContent = "正在加载上报列表...";
+    try{
+        const res = await fetch("/api/hardware/list");
+        const json = await res.json();
+        if(!json.success){
+            box.textContent = "获取上报列表失败";
+            return;
+        }
+        const list = json.data;
+        if(list.length === 0){
+            box.textContent = "暂无硬件上报记录，请下载脚本在Windows本地运行上报";
+            return;
+        }
+        let outText = "";
+        list.forEach((item,idx)=>{
+            outText += `====== 第${idx+1}条 | 上报时间:${item.uploadTime} | 公网IP:${item.clientPublicIp} ======\n`;
+            outText += `计算机名:${item.computerName}\n设备型号:${item.model}\nBIOS序列号SN:${item.biosSN}\n系统:${item.osCaption} ${item.osVersion}\n内存GB:${item.totalMemoryGB}\nCPU:${item.cpuName}\n`;
+            outText += `网卡数量：${item.nicList.length}\n`;
+            item.nicList.forEach(n=>{
+                outText += `  ‣网卡：${n.description}\n    MAC：${n.macAddress} | IP：${JSON.stringify(n.ipAddress)}\n`;
+            })
+            outText += "\n";
+        })
+        box.textContent = outText;
+    }catch(err){
+        box.textContent = "请求异常："+err.message;
+    }
+}
+
+// 【修复版】下载ps1脚本，不使用JS反引号模板字符串，改用数组拼接彻底规避转义冲突
+function downloadPs1Script(){
+    const lines = [
+        "<#",
+        ".SYNOPSIS",
+        "LiSheng's Box Windows hardware collect and upload script",
+        "Run as administrator, collect hardware info and POST to web backend",
+        "#>",
+        "# ========== Modify site URL, local: http://127.0.0.1:3000, production use render domain ==========",
+        "#$baseUrl = \"http://127.0.0.1:3000\"",
+        "$baseUrl = \"https://st-ws3r.onrender.com\"",
+        "",
+        "# Check admin privilege",
+        "$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]\"Administrator\")",
+        "if(-not $isAdmin){",
+        "    Write-Host \"ERROR: This script must run in Administrator PowerShell!\" -ForegroundColor Red",
+        "    pause",
+        "    exit",
+        "}",
+        "",
+        "Write-Host \"\\`n===== Start collecting local hardware information =====\" -ForegroundColor Cyan",
+        "",
+        "# Collect BIOS serial number, device model",
+        "$bios = Get-CimInstance Win32_BIOS",
+        "$csInfo = Get-CimInstance Win32_ComputerSystem",
+        "$osInfo = Get-CimInstance Win32_OperatingSystem",
+        "$cpuInfo = Get-CimInstance Win32_Processor",
+        "$memoryTotalGB = [Math]::Round($csInfo.TotalPhysicalMemory / 1GB,2)",
+        "",
+        "# Network adapter info(filter physical nic, exclude virtual adapters)",
+        "$nicList = @()",
+        "$nics = Get-CimInstance Win32_NetworkAdapterConfiguration | Where-Object {$_.MACAddress -and $_.IPAddress -and $_.Description -notmatch \"VPN|Virtual|VMware|Hyper-V\"}",
+        "foreach($nic in $nics){",
+        "    $nicList += [PSCustomObject]@{",
+        "        description = $nic.Description",
+        "        macAddress  = $nic.MACAddress",
+        "        ipAddress   = $nic.IPAddress",
+        "    }",
+        "}",
+        "",
+        "# Build JSON payload",
+        "$payload = [PSCustomObject]@{",
+        "    computerName = $env:COMPUTERNAME",
+        "    model        = $csInfo.Model",
+        "    biosSN       = $bios.SerialNumber",
+        "    osCaption    = $osInfo.Caption",
+        "    osVersion    = $osInfo.Version",
+        "    cpuName      = $cpuInfo.Name.Trim()",
+        "    totalMemoryGB= $memoryTotalGB",
+        "    nicList      = $nicList",
+        "}",
+        "",
+        "$jsonData = $payload | ConvertTo-Json -Depth 10",
+        "Write-Host \"\\`nSUCCESS: Collection finished, preparing to upload:\\`n\" -ForegroundColor Green",
+        "Write-Host $jsonData",
+        "",
+        "# POST submit to backend api",
+        "try{",
+        "    $response = Invoke-RestMethod -Uri \"$baseUrl/api/hardware/upload\" -Method Post -Body $jsonData -ContentType \"application/json\"",
+        "    if($response.success){",
+        "        Write-Host \"\\`nSUCCESS: Upload success!\" -ForegroundColor Green",
+        "    }else{",
+        "        Write-Host \"\\`nERROR: Upload failed: $($response.msg)\" -ForegroundColor Red",
+        "    }",
+        "}",
+        "catch{",
+        "    Write-Host \"\\`nERROR: Network request exception: $($_.Exception.Message)\" -ForegroundColor Red",
+        "}",
+        "",
+        "Write-Host \"\\`nPress Enter to exit...\" -ForegroundColor Gray",
+        "pause"
+    ];
+    const ps1Content = lines.join("\r\n");
+    const blob = new Blob([ps1Content], {type: "text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const tempA = document.createElement("a");
+    tempA.href = url;
+    tempA.download = "Win-Hardware-Upload.ps1";
+    document.body.appendChild(tempA);
+    tempA.click();
+    document.body.removeChild(tempA);
+    URL.revokeObjectURL(url);
+}
+
 </script>
 <!-- 页脚友情链接 -->
 <footer style="margin-top:40px;padding:24px;background:rgba(0,0,0,0.2);border-radius:14px;color:#fff;text-align:center;">

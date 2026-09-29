@@ -11,7 +11,6 @@ app.use(express.json());
 app.use(express.static(__dirname + '/../'));
 // 【设置全局DNS服务器，改用国内公共DNS，大幅减少超时】
 dns.setServers(['114.114.114.114','223.5.5.5']);
-
 // 端口扫描限流：单目标1分钟最多5次
 const rateMap = new Map();
 const RATE_LIMIT_COUNT = 5;
@@ -31,7 +30,6 @@ function checkRate(host) {
     item.count += 1;
     return true;
 }
-
 // 通用fetch封装：兼容超时，不用AbortSignal.timeout
 async function safeFetch(url, opt={}, ms=8000){
     const controller = new AbortController();
@@ -45,7 +43,6 @@ async function safeFetch(url, opt={}, ms=8000){
         throw e;
     }
 }
-
 // Ping接口
 app.post('/api/ping', (req, res) => {
     const { host } = req.body;
@@ -56,7 +53,6 @@ app.post('/api/ping', (req, res) => {
         res.json({ success: true, output: stdout });
     })
 });
-
 // DNS查询接口【修复：增加超时Promise，解决长时间timeout卡死】
 app.post('/api/dns', async (req, res) => {
     try {
@@ -79,7 +75,6 @@ app.post('/api/dns', async (req, res) => {
         res.json({ error: e.message });
     }
 });
-
 // SSL证书检测【内置tls原生实现，不需要第三方包】
 app.post('/api/ssl', async (req, res) => {
     try {
@@ -119,7 +114,6 @@ app.post('/api/ssl', async (req, res) => {
         res.json({ error: e.message });
     }
 });
-
 // TCP端口探测接口
 app.post('/api/portscan', async (req, res) => {
     const { host, ports } = req.body;
@@ -140,7 +134,6 @@ app.post('/api/portscan', async (req, res) => {
     }
     res.json({ success: true, results: resultList });
 });
-
 // HTTP连通检测接口，自动补https，修复Invalid URL，使用safeFetch防卡死
 app.post('/api/http', async (req, res) => {
     try {
@@ -154,7 +147,6 @@ app.post('/api/http', async (req, res) => {
         res.json({ error: e.message });
     }
 });
-
 // ========== SSE 实时路由追踪【修复：超时改成120秒，适配Windows tracert】==========
 app.get('/api/traceroute', (req, res) => {
     const target = req.query.host?.trim();
@@ -166,19 +158,16 @@ app.get('/api/traceroute', (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
-
     // Windows: tracert -d，Linux: traceroute -n
     const cmd = process.platform === 'win32' ? 'tracert' : 'traceroute';
     const args = process.platform === 'win32' ? ['-d', target] : ['-n', target];
     const tracer = spawn(cmd, args);
-
     // 修改：最大超时120秒，tracert完整跑完30跳需要这么久
     const killTimer = setTimeout(()=>{
         tracer.kill();
         res.write(`data: \n---追踪超时(120s)，强制结束---\n\n`);
         res.end();
     },120000);
-
     tracer.stdout.on('data', (buf) => {
     let text = buf.toString();
     // =========就是这两行，放在回调函数内部=========
@@ -205,7 +194,6 @@ app.get('/api/traceroute', (req, res) => {
         tracer.kill();
     })
 });
-
 // IP归属地查询接口 - ip.sb国内稳定版，使用safeFetch防卡死
 app.post('/api/ipgeo', async (req, res) => {
     try {
@@ -232,7 +220,6 @@ app.post('/api/ipgeo', async (req, res) => {
         res.json({success:false, error:"异常："+ e.message})
     }
 });
-
 // WHOIS域名查询接口
 app.post('/api/whois', async (req, res) => {
     try {
@@ -270,7 +257,38 @@ app.post('/api/whois', async (req, res) => {
     }
 });
 
-const PORT = 3000;
+// =====================【新增：硬件上报接口】=====================
+// 内存存储硬件上报记录，服务重启数据丢失
+let hardwareRecordList = [];
+// POST接收客户端硬件信息上报
+app.post('/api/hardware/upload', async (req, res) => {
+  try {
+    const data = req.body;
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const uploadTime = new Date().toLocaleString();
+    const record = {
+      ...data,
+      clientPublicIp: clientIp,
+      uploadTime: uploadTime
+    };
+    hardwareRecordList.push(record);
+    console.log("收到硬件上报数据：", record);
+    res.json({success:true,msg:"上报成功"});
+  } catch(err) {
+    console.error("硬件上报报错：",err);
+    res.json({success:false,msg:"上报失败:"+err.message})
+  }
+})
+// GET读取全部硬件上报记录（后面前端页面用来展示设备列表）
+app.get('/api/hardware/list', (req,res)=>{
+  res.json({
+    success:true,
+    data: hardwareRecordList
+  })
+})
+// ===============================================================
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`服务启动：http://127.0.0.1:${PORT}`);
+    console.log(`服务启动，端口：${PORT}`);
 })
