@@ -4,6 +4,7 @@ const dns = require('dns').promises;
 const net = require('net');
 const tls = require('tls');
 const { spawn } = require('child_process');
+const crypto = require('crypto');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -259,13 +260,35 @@ app.post('/api/whois', async (req, res) => {
 
 // =====================【新增：硬件上报接口】=====================
 // 内存存储硬件上报记录，服务重启数据丢失
+// =====================【硬件上报+Token鉴权模块】=====================
 let hardwareRecordList = [];
-// POST接收客户端硬件信息上报
+// 修改这里为你自己的管理员账号密码
+const ADMIN_USER = "steven";
+const ADMIN_PASS = "123456";
+// 存放临时有效token，内存存储，服务重启全部失效
+const validTokens = new Set();
+
+// 登录接口：账号密码换取临时token
+app.post('/api/hardware/login', express.json(), (req, res) => {
+  const { user, pass } = req.body;
+  if(user === ADMIN_USER && pass === ADMIN_PASS){
+    const token = crypto.randomBytes(32).toString('hex');
+    validTokens.add(token);
+    // token有效期30分钟，到期自动删除
+    setTimeout(()=>{ validTokens.delete(token); }, 30 * 60 * 1000);
+    return res.json({success:true, token:token});
+  }else{
+    return res.status(403).json({success:false, msg:"账号或密码错误"});
+  }
+});
+
+// POST接收客户端硬件信息上报，脚本上报无需登录，强制东八区Asia/Shanghai
 app.post('/api/hardware/upload', async (req, res) => {
   try {
     const data = req.body;
     const clientIp = req.ip || req.connection.remoteAddress;
-    const uploadTime = new Date().toLocaleString();
+    // 强制北京时间东八区，不受Render服务器UTC时区影响
+    const uploadTime = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
     const record = {
       ...data,
       clientPublicIp: clientIp,
@@ -276,16 +299,23 @@ app.post('/api/hardware/upload', async (req, res) => {
     res.json({success:true,msg:"上报成功"});
   } catch(err) {
     console.error("硬件上报报错：",err);
-    res.json({success:false,msg:"上报失败:"+err.message})
+    res.json({success:false,msg:"上报失败:"+err.message});
   }
-})
-// GET读取全部硬件上报记录（后面前端页面用来展示设备列表）
+});
+
+// GET读取硬件上报记录，必须携带合法token才能访问
 app.get('/api/hardware/list', (req,res)=>{
+  const token = req.headers['x-admin-token'];
+  if(!token || !validTokens.has(token)){
+    return res.status(403).json({success:false,msg:"无权限，请先登录"});
+  }
   res.json({
     success:true,
     data: hardwareRecordList
-  })
-})
+  });
+});
+// =================================================================
+
 // ===============================================================
 
 const PORT = process.env.PORT || 3000;

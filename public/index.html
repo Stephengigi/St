@@ -890,14 +890,49 @@ async function runWhois(){
     }
 }
 // =========【新增：读取硬件上报记录】=========
+// 全局保存登录token，关闭浏览器标签页就失效
+let adminToken = null;
+
 async function loadHardwareReport(){
     const box = document.getElementById("hardwareReportResult");
+    // 没有token，弹出输入账号密码
+    if(!adminToken){
+        const username = prompt("请输入管理员账号：");
+        if(!username) return;
+        const password = prompt("请输入管理员密码：");
+        if(!password) return;
+        try{
+            const loginResp = await fetch("/api/hardware/login",{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body: JSON.stringify({user:username, pass:password})
+            });
+            const loginResult = await loginResp.json();
+            if(!loginResult.success){
+                alert(loginResult.msg);
+                return;
+            }
+            adminToken = loginResult.token;
+            alert("登录成功，正在加载上报记录");
+        }catch(e){
+            alert("登录请求失败！");
+            console.error(e);
+            return;
+        }
+    }
+
     box.textContent = "正在加载上报列表...";
     try{
-        const res = await fetch("/api/hardware/list");
+        const res = await fetch("/api/hardware/list",{
+            headers:{
+                "x-admin-token": adminToken
+            }
+        });
         const json = await res.json();
         if(!json.success){
-            box.textContent = "获取上报列表失败";
+            alert(json.msg);
+            adminToken = null;
+            box.textContent = "权限失效，请重新点击按钮登录";
             return;
         }
         const list = json.data;
@@ -918,8 +953,10 @@ async function loadHardwareReport(){
         box.textContent = outText;
     }catch(err){
         box.textContent = "请求异常："+err.message;
+        adminToken = null;
     }
 }
+
 
 // 【修复版】下载ps1脚本，不使用JS反引号模板字符串，改用数组拼接彻底规避转义冲突
 function downloadPs1Script(){
